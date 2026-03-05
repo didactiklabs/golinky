@@ -8,6 +8,7 @@ permissions:
   packages: write
 jobs:
   release:
+    needs: publish
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -30,7 +31,7 @@ jobs:
           generate_release_notes: true
           files: deploy/bundle.yaml
 
-  docker:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
