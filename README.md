@@ -26,7 +26,7 @@ Uses [`docker-compose.yaml`](docker-compose.yaml):
 ```yaml
 services:
   golinky:
-    image: gcr.io/didactiklabs/golinky:latest
+    image: ghcr.io/didactiklabs/golinky:latest
     environment:
       - TZ=Europe/Paris
     volumes:

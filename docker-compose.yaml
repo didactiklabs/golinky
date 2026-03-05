@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   golinky:
-    image: gcr.io/didactiklabs/golinky:latest
+    image: ghcr.io/didactiklabs/golinky:latest
     container_name: golinky
     environment:
       - TZ=Europe/Paris
