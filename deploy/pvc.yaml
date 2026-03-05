@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 600Mi
+# Optional PersistentVolumeClaim for Netbird's state when using the Netbird sidecar for secure remote access to the Golinky instance. Uncomment the following section and the corresponding volume and container sections in deploy/deployment.yaml to enable it.
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: netbird
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 200Mi

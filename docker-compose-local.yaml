@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  golinky:
+    build: .
+    container_name: golinky
+    environment:
+      - TZ=Europe/Paris
+    volumes:
+      - golinky-data:/app/data
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+volumes:
+  golinky-data:

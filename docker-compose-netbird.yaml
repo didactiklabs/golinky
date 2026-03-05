@@ -1,0 +1,32 @@
+# docker-compose with netbird integration
+version: '3.8'
+services:
+  netbird:
+    image: netbirdio/netbird:latest
+    container_name: netbird-daemon
+    privileged: true
+    volumes:
+      - netbird-config:/etc/netbird
+    environment:
+      - NB_SETUP_KEY=${NB_SETUP_KEY} # Optional
+      - NB_MANAGEMENT_URL=${NB_MANAGEMENT_URL:-https://api.netbird.io:443}
+      - NB_LOG_LEVEL=info
+      - NB_HOSTNAME=go
+    restart: unless-stopped
+    command: up --setup-key=${NB_SETUP_KEY}
+
+  golinky:
+    build: .
+    container_name: golinky
+    network_mode: "service:netbird"
+    depends_on:
+      - netbird
+    environment:
+      - TZ=Europe/Paris
+    volumes:
+      - golinky-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  netbird-config:
+  golinky-data:

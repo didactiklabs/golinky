@@ -1,0 +1,54 @@
+{{ define "main" }}
+   <div class="card">
+      <h2>Edit Link</h2>
+
+      <form id="update-form" method="POST" action="/">
+        <input type="hidden" name="short" value="{{.Link.Short}}">
+
+        <div class="detail-section">
+          <label class="detail-label">Short Name</label>
+          <div class="detail-value-box">
+            <span class="detail-prefix">http://{{go}}/</span>
+            <span class="detail-short">{{.Link.Short}}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <label for="long" class="detail-label">Destination URL</label>
+          <input
+            id="long"
+            name="long"
+            required
+            type="text"
+            placeholder="https://destination-url"
+            value="{{.Link.Long}}"
+            class="input-full">
+        </div>
+
+        <div class="details-grid">
+          <div>
+            <strong>Date Created</strong>
+            <p>{{.Link.Created.Format "Jan _2, 2006 3:04pm MST"}}</p>
+          </div>
+
+          <div>
+            <strong>Date Last Edited</strong>
+            <p>{{.Link.LastEdit.Format "Jan _2, 2006 3:04pm MST"}}</p>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button type="submit" class="btn btn-primary">Update Link</button>
+          <a href="/" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+
+      <div class="danger-zone">
+        <h3>Danger Zone</h3>
+        <p>Once you delete a link, there is no going back. Please be certain.</p>
+        <form method="POST" action="/.delete/{{.Link.Short}}">
+          <button type="submit" class="btn btn-danger">Delete this link</button>
+        </form>
+      </div>
+   </div>
+{{ end }}

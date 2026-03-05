@@ -1,0 +1,129 @@
+{{ define "main" }}
+    <div class="card">
+      <h2>{{go}}/ — Help and Advanced Options</h2>
+      <p class="help-subtitle">A simple shortlink service</p>
+      <p style="margin-top: 0.5rem; color: var(--text-muted);">
+        Go links provide short, memorable links for the websites you and your team use most.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Creating go links</h2>
+      <p>All go links have a short name and a destination link that the go link points to. Some notes on short names:</p>
+      <ul class="help-list">
+        <li>Names must start with a letter or number</li>
+        <li>Names may contain letters, numbers, hyphens, and periods</li>
+        <li>Names are not case-sensitive (<code>{{go}}/foo</code> is the same as <code>{{go}}/FOO</code>)</li>
+        <li>Hyphens are ignored when resolving links (<code>{{go}}/meetingnotes</code> is the same as <code>{{go}}/meeting-notes</code>)</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Resolving links</h2>
+      <p>
+        Go links can be entered directly into any browser or command line utility such as <code>curl</code>.
+      </p>
+      <p style="margin-top: 1rem;">
+        Any additional path provided after the short name will be added to the end of the destination link.
+        For example, if <code>{{go}}/who</code> goes to your company directory at <code>http://directory/</code>,
+        then <code>{{go}}/who/amelie</code> will go to <code>http://directory/amelie</code>.
+      </p>
+      <p style="margin-top: 1rem;">
+        Advanced destination links allow you to further customize this behavior.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Advanced destination links</h2>
+      <p>
+        To have more control over how go links are resolved, destination links can use
+        <a href="https://pkg.go.dev/text/template" target="_blank">Go template syntax</a>.
+        Templates are provided a data structure with the following fields:
+      </p>
+      <ul class="help-list">
+        <li><code>.Path</code> — the remaining path value after the short name (without a leading slash). For the link <code>{{go}}/who/amelie</code>, the value of <code>.Path</code> is <code>amelie</code>.</li>
+        <li><code>.Now</code> — a <code>time.Time</code> value representing the current date and time.</li>
+      </ul>
+
+      <p style="margin-top: 1rem;">Templates also have access to the following template functions:</p>
+      <ul class="help-list">
+        <li><code>PathEscape</code> — the <code>url.PathEscape</code> function for escaping values inside a URL path.</li>
+        <li><code>QueryEscape</code> — the <code>url.QueryEscape</code> function for escaping values inside a URL query.</li>
+        <li><code>TrimPrefix</code> — the <code>strings.TrimPrefix</code> function for removing a leading prefix.</li>
+        <li><code>TrimSuffix</code> — the <code>strings.TrimSuffix</code> function for removing a trailing suffix.</li>
+        <li><code>ToLower</code> — the <code>strings.ToLower</code> function for mapping all Unicode letters to their lower case.</li>
+        <li><code>ToUpper</code> — the <code>strings.ToUpper</code> function for mapping all Unicode letters to their upper case.</li>
+        <li><code>Match</code> — the <code>regexp.MatchString</code> function for matching a regular expression pattern.</li>
+      </ul>
+
+      <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem;">Common example</h3>
+      <p>
+        The most common use of advanced destination links is to put the additional path in a custom location
+        in the destination link. For example, you might set the destination for <code>{{go}}/search</code> to:
+      </p>
+      <div class="code-block">
+        <code>https://www.google.com/{{"{{"}}if .Path{{"}}"}}search?q={{"{{"}}QueryEscape .Path{{"}}"}}{{"{{"}}end{{"}}"}}</code>
+      </div>
+      <p style="margin-top: 0.75rem;">
+        When a user visits <code>{{go}}/search</code> with no additional path, they will be directed to
+        <code>https://www.google.com/</code>. If they include an additional path like <code>{{go}}/search/pangolins</code>,
+        they will be directed to <code>https://www.google.com/search?q=pangolins</code>.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Examples</h2>
+      <table class="links-table">
+        <thead>
+          <tr>
+            <th>Use case</th>
+            <th>Short name</th>
+            <th>Destination</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Include path in query</td>
+            <td><code>{{go}}/search</code></td>
+            <td class="link-long" style="max-width: none;"><code>https://cloudsearch.google.com/{{"{{"}}if .Path{{"}}"}}cloudsearch/search?q={{"{{"}}QueryEscape .Path{{"}}"}}{{"{{"}}end{{"}}"}}</code></td>
+          </tr>
+          <tr>
+            <td>Include path in destination path</td>
+            <td><code>{{go}}/slack</code></td>
+            <td class="link-long" style="max-width: none;"><code>https://company.slack.com/{{"{{"}}if .Path{{"}}"}}channels/{{"{{"}}PathEscape .Path{{"}}"}}{{"{{"}}end{{"}}"}}</code></td>
+          </tr>
+          <tr>
+            <td>Include path in hostname</td>
+            <td><code>{{go}}/varz</code></td>
+            <td class="link-long" style="max-width: none;"><code>http://{{"{{"}}if .Path{{"}}"}}{{"{{"}}.Path{{"}}"}}{{"{{"}}else{{"}}"}}host{{"{{"}}end{{"}}"}}.example/debug/varz</code></td>
+          </tr>
+          <tr>
+            <td>Include today's date</td>
+            <td><code>{{go}}/today</code></td>
+            <td class="link-long" style="max-width: none;"><code>http://wiki/{{"{{"}} .Now.Format "01-02-2006" {{"}}"}}</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>API</h2>
+      <p>There is no formal API, but many endpoints lend themselves to programmatic access.</p>
+
+      <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem;">Export all links</h3>
+      <p>Visit <a href="/.export"><code>{{go}}/.export</code></a> to export all saved links and their metadata in JSON Lines format. This is useful to create data snapshots that can be restored later with the <code>-snapshot</code> flag.</p>
+      <div class="code-block">
+        <code>$ curl -L {{go}}/.export</code>
+      </div>
+
+      <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem;">Create a new link</h3>
+      <p>Create a new link by sending a POST request with a <code>short</code> and <code>long</code> value:</p>
+      <div class="code-block">
+        <code>$ curl -L -d short=cs -d long=https://cs.github.com/ {{go}}/</code>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <a href="/" class="btn btn-primary">← Back to home</a>
+    </div>
+{{ end }}

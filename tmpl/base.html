@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>{{go}}/</title>
+  <link rel="stylesheet" href="/.static/base.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <h1><a href="/">{{go}}/</a></h1>
+      <p class="subtitle">A simple shortlink service</p>
+    </div>
+  </div>
+
+  <main class="container">
+    {{ block "main" .}}{{ end }}
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      Made with ❤️ by DidactikLabs
+    </div>
+  </footer>
+</body>
+</html>

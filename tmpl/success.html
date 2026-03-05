@@ -1,0 +1,12 @@
+{{ define "main" }}
+    <div class="card">
+      <h2 class="success-title">✓ Link Created Successfully</h2>
+
+      <p>Your link <a href="/{{.Short}}" class="link-highlight">{{go}}/{{.Short}}</a> has been created!</p>
+
+      <div class="button-group">
+        <a href="/" class="btn btn-primary">Create Another</a>
+        <a href="/.detail/{{.Short}}" class="btn btn-secondary">View Details</a>
+      </div>
+    </div>
+{{ end }}

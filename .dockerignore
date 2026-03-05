@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yaml
+.dockerignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Build artifacts
+golinky
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+*.test
+
+# Documentation
+README.md
+LICENSE
+*.md
+
+# Database files (will be in volume)
+*.db
+*.db-shm
+*.db-wal
+
+# Misc
+.DS_Store
