@@ -41,7 +41,7 @@ spec:
         #       memory: "128Mi"
         #       cpu: "200m"
         - name: golinky
-          image: ghcr.io/didactiklabs/golinky:0.1.0
+          image: ghcr.io/didactiklabs/golinky:latest
           args: ["-listen", "0.0.0.0:80", "-sqlitedb", "/app/data/golinky.db"]
           securityContext:
             runAsUser: 1000

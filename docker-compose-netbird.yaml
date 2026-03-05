@@ -16,7 +16,7 @@ services:
     command: up --setup-key=${NB_SETUP_KEY}
 
   golinky:
-    build: .
+    image: ghcr.io/didactiklabs/golinky:latest
     container_name: golinky
     network_mode: "service:netbird"
     depends_on:

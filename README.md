@@ -52,13 +52,23 @@ docker compose -f docker-compose-netbird.yaml up -d
 
 ### Kubernetes (with optional Netbird)
 
-Kubernetes manifests are located in the [`deploy/`](deploy/) directory. Apply them with:
+A Kustomize bundle with the correct image tag is attached to each [GitHub Release](https://github.com/didactiklabs/golinky/releases). Deploy it with:
 
 ```bash
-kubectl apply -f deploy/
+kubectl apply -f https://github.com/didactiklabs/golinky/releases/latest/download/bundle.yaml
 ```
 
-> **Note:** To unable netbird integration, uncomment some manifests in the `deploy/` directory.
+Or a specific version:
+
+```bash
+kubectl apply -f https://github.com/didactiklabs/golinky/releases/download/v0.1.0/bundle.yaml
+```
+
+> **Note:** To unable netbird integration, uncomment some manifests in the `deploy/` directory and deploy it yourself with this command:
+```bash
+# Warning: latest tag is used here !
+kustomize build deploy/ | kubectl apply -f -
+```
 
 
 ### From source
