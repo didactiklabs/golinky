@@ -23,8 +23,6 @@ spec:
         #   securityContext:
         #     privileged: true
         #   env:
-        #     - name: NB_MANAGEMENT_URL
-        #       value: "https://netbird.mallow.fr"
         #     - name: NB_LOG_LEVEL
         #       value: "info"
         #     - name: NB_HOSTNAME
