@@ -57,6 +57,24 @@ func TestExpandLinkSimple(t *testing.T) {
 			path: "foo/bar",
 			want: "https://example.com/foo/bar",
 		},
+		{
+			name: "bare domain without scheme",
+			long: "example.com",
+			path: "",
+			want: "http://example.com",
+		},
+		{
+			name: "bare domain with path",
+			long: "example.com",
+			path: "page",
+			want: "http://example.com/page",
+		},
+		{
+			name: "bare domain with subpath",
+			long: "example.com/foo",
+			path: "",
+			want: "http://example.com/foo",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

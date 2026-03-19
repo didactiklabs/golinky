@@ -488,6 +488,14 @@ func expandLink(long string, env expandEnv) (*url.URL, error) {
 		return nil, err
 	}
 
+	// Add http:// scheme if missing so bare domains like "example.com" work.
+	if u.Scheme == "" && u.Host == "" && !strings.HasPrefix(u.Path, "/") {
+		u, err = url.Parse("http://" + buf.String())
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// add query parameters from original request
 	if len(env.query) > 0 {
 		query := u.Query()
