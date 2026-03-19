@@ -229,14 +229,45 @@ func serveHandler() http.Handler {
 	mux.HandleFunc("/.delete/", serveDelete)
 	mux.HandleFunc("/.search", serveSearch)
 	mux.HandleFunc("/.help", serveHelp)
+	mux.HandleFunc("/healthz", serveHealthz)
+	mux.HandleFunc("/.api/links", serveAPILinks)
+	mux.HandleFunc("/.api/links/", serveAPILink)
 	mux.Handle("/.static/", http.StripPrefix("/.", http.FileServer(http.FS(embeddedFS))))
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.HasPrefix(r.URL.Path, "/.") {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/.") && r.URL.Path != "/healthz" {
 			serveGo(w, r)
 			return
 		}
 		mux.ServeHTTP(w, r)
+	})
+
+	return loggingMiddleware(handler)
+}
+
+// responseWriter wraps http.ResponseWriter to capture the status code.
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Skip logging for static assets to reduce noise.
+		if strings.HasPrefix(r.URL.Path, "/.static/") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		start := time.Now()
+		rw := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+		next.ServeHTTP(rw, r)
+		log.Printf("%s %s %d %s", r.Method, r.URL.Path, rw.statusCode, time.Since(start).Round(time.Microsecond))
 	})
 }
 
@@ -496,6 +527,180 @@ func serveDelete(w http.ResponseWriter, r *http.Request) {
 		Short: link.Short,
 		Long:  link.Long,
 	})
+}
+
+// serveHealthz responds with 200 OK for health checks.
+func serveHealthz(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+// --- JSON API ---
+
+type apiError struct {
+	Error string `json:"error"`
+}
+
+func writeJSON(w http.ResponseWriter, status int, v interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	enc.Encode(v)
+}
+
+// serveAPILinks handles GET /.api/links (list all) and POST /.api/links (create/update).
+func serveAPILinks(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		links, err := db.LoadAll()
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, apiError{Error: err.Error()})
+			return
+		}
+		sort.Slice(links, func(i, j int) bool {
+			return links[i].Short < links[j].Short
+		})
+		if links == nil {
+			links = []*Link{}
+		}
+		writeJSON(w, http.StatusOK, links)
+
+	case http.MethodPost:
+		var input struct {
+			Short string `json:"short"`
+			Long  string `json:"long"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			writeJSON(w, http.StatusBadRequest, apiError{Error: "invalid JSON body"})
+			return
+		}
+		if input.Short == "" || input.Long == "" {
+			writeJSON(w, http.StatusBadRequest, apiError{Error: "short and long required"})
+			return
+		}
+		if !reShortName.MatchString(input.Short) {
+			writeJSON(w, http.StatusBadRequest, apiError{Error: "short may only contain letters, numbers, dash, and period"})
+			return
+		}
+		if _, err := texttemplate.New("").Funcs(expandFuncMap).Parse(input.Long); err != nil {
+			writeJSON(w, http.StatusBadRequest, apiError{Error: fmt.Sprintf("long contains an invalid template: %v", err)})
+			return
+		}
+
+		link, err := db.Load(input.Short)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			writeJSON(w, http.StatusInternalServerError, apiError{Error: err.Error()})
+			return
+		}
+
+		now := time.Now().UTC()
+		isNew := link == nil
+		if isNew {
+			link = &Link{
+				Short:   input.Short,
+				Created: now,
+			}
+		}
+		link.Short = input.Short
+		link.Long = input.Long
+		link.LastEdit = now
+
+		if err := db.Save(link); err != nil {
+			writeJSON(w, http.StatusInternalServerError, apiError{Error: err.Error()})
+			return
+		}
+
+		status := http.StatusOK
+		if isNew {
+			status = http.StatusCreated
+		}
+		writeJSON(w, status, link)
+
+	default:
+		w.Header().Set("Allow", "GET, POST")
+		writeJSON(w, http.StatusMethodNotAllowed, apiError{Error: "method not allowed"})
+	}
+}
+
+// serveAPILink handles GET /.api/links/{name}, PUT /.api/links/{name}, DELETE /.api/links/{name}.
+func serveAPILink(w http.ResponseWriter, r *http.Request) {
+	short := strings.TrimPrefix(r.URL.Path, "/.api/links/")
+	if short == "" {
+		writeJSON(w, http.StatusBadRequest, apiError{Error: "short name required"})
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		link, err := db.Load(short)
+		if errors.Is(err, fs.ErrNotExist) {
+			writeJSON(w, http.StatusNotFound, apiError{Error: "link not found"})
+			return
+		}
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, apiError{Error: err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusOK, link)
+
+	case http.MethodPut:
+		var input struct {
+			Long string `json:"long"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			writeJSON(w, http.StatusBadRequest, apiError{Error: "invalid JSON body"})
+			return
+		}
+		if input.Long == "" {
+			writeJSON(w, http.StatusBadRequest, apiError{Error: "long required"})
+			return
+		}
+		if _, err := texttemplate.New("").Funcs(expandFuncMap).Parse(input.Long); err != nil {
+			writeJSON(w, http.StatusBadRequest, apiError{Error: fmt.Sprintf("long contains an invalid template: %v", err)})
+			return
+		}
+
+		link, err := db.Load(short)
+		if errors.Is(err, fs.ErrNotExist) {
+			writeJSON(w, http.StatusNotFound, apiError{Error: "link not found"})
+			return
+		}
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, apiError{Error: err.Error()})
+			return
+		}
+
+		link.Long = input.Long
+		link.LastEdit = time.Now().UTC()
+		if err := db.Save(link); err != nil {
+			writeJSON(w, http.StatusInternalServerError, apiError{Error: err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusOK, link)
+
+	case http.MethodDelete:
+		link, err := db.Load(short)
+		if errors.Is(err, fs.ErrNotExist) {
+			writeJSON(w, http.StatusNotFound, apiError{Error: "link not found"})
+			return
+		}
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, apiError{Error: err.Error()})
+			return
+		}
+		if err := db.Delete(short); err != nil {
+			writeJSON(w, http.StatusInternalServerError, apiError{Error: err.Error()})
+			return
+		}
+		deleteLinkStats(link)
+		writeJSON(w, http.StatusOK, link)
+
+	default:
+		w.Header().Set("Allow", "GET, PUT, DELETE")
+		writeJSON(w, http.StatusMethodNotAllowed, apiError{Error: "method not allowed"})
+	}
 }
 
 func serveSave(w http.ResponseWriter, r *http.Request) {
