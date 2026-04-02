@@ -17,7 +17,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Kustomize
-        uses: imranismail/setup-kustomize@v2
+        uses: imranismail/setup-kustomize@v3
 
       - name: Generate Kustomize bundle
         run: |
