@@ -13,7 +13,9 @@ import (
 	"time"
 
 	_ "modernc.org/sqlite"
-) // Link is the structure stored for each go short link.
+)
+
+// Link is the structure stored for each go short link.
 type Link struct {
 	Short    string // the "foo" part of http://go/foo
 	Long     string // the target URL or text/template pattern to run
