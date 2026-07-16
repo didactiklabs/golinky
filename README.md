@@ -7,6 +7,7 @@ Perfect for internal networks, home labs, or team environments where you need qu
 ## Features
 
 - Modern, responsive interface
+- Fuzzy search across links
 - Statistics tracking
 - Advanced URL templating support
 - SQLite persistence
@@ -102,7 +103,8 @@ TZ="Europe/Paris" ./golinky
 | Route | Description |
 |-------|-------------|
 | `/` | Home — create links & view popular links |
-| `/.all` | Browse and search all links |
+| `/.all` | Browse and fuzzy-search all links |
+| `/.search?q={query}` | Fuzzy search links by short name or destination |
 | `/.help` | Help & advanced options documentation |
 | `/.export` | Download all links in JSON Lines format |
 | `/.detail/{name}` | View / edit a specific link |
