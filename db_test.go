@@ -1,3 +1,6 @@
+// Copyright 2026 Golinky
+// SPDX-License-Identifier: BSD-3-Clause
+
 package main
 
 import (

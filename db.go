@@ -1,4 +1,4 @@
-// Copyright 2024 Golinky
+// Copyright 2026 Golinky
 // SPDX-License-Identifier: BSD-3-Clause
 
 package main
