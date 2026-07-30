@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/sahilm/fuzzy v0.1.3
-	modernc.org/sqlite v1.54.0
+	modernc.org/sqlite v1.55.0
 )
 
 require (
